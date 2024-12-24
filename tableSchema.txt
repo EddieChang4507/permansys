@@ -1,0 +1,44 @@
+CREATE TABLE employees (
+    account VARCHAR(50) NOT NULL PRIMARY KEY,       -- 帳號
+    password VARCHAR(255) NOT NULL,                -- 密碼
+    name VARCHAR(100) NOT NULL,                    -- 姓名
+    birth_date DATE,                               -- 生日
+    department VARCHAR(100),                       -- 部門
+    team VARCHAR(100),                             -- 組別
+    status VARCHAR(20) DEFAULT 'active',           -- 狀態 (例如：active/inactive)
+    effective_date DATE,                           -- 帳號生效日期
+    disabled_date DATE,                            -- 帳號停用日期
+    hire_date DATE,                                -- 入職日期
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 建立日期
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 修改日期 (觸發器會更新)
+    memo TEXT                                      -- 備註 (Memo)
+);
+
+-- 為 updated_at 欄位添加自動更新的觸發器
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_set_updated_at
+BEFORE UPDATE ON employees
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+-- 加入欄位的中文註解
+COMMENT ON COLUMN employees.account IS '帳號';
+COMMENT ON COLUMN employees.password IS '密碼';
+COMMENT ON COLUMN employees.name IS '姓名';
+COMMENT ON COLUMN employees.birth_date IS '生日';
+COMMENT ON COLUMN employees.department IS '部門';
+COMMENT ON COLUMN employees.team IS '組別';
+COMMENT ON COLUMN employees.status IS '狀態 (例如：有效、無效)';
+COMMENT ON COLUMN employees.effective_date IS '帳號生效日期';
+COMMENT ON COLUMN employees.disabled_date IS '帳號停用日期';
+COMMENT ON COLUMN employees.hire_date IS '入職日期';
+COMMENT ON COLUMN employees.created_at IS '建立日期';
+COMMENT ON COLUMN employees.updated_at IS '修改日期';
+COMMENT ON COLUMN employees.memo IS '備註';
