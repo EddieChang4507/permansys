@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>修改使用者</title>
+	<link rel="stylesheet" type="text/css" th:href="@{css/common.css}" />
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="form-page">
+	<div class="form-container" style="align-items: center;">
+		<h1>修改使用者</h1>
+		<div class="form-actions">
+			<button type="button" id="btnSignOut" class="btn btn-primary" style="margin-left: auto;" onclick="signOut()">登出</button>
+		</div>
+		<div class="form-actions">
+			<button type="button" id="btn1" class="btn btn-primary" onclick="navigateToPage('searchPage')">查詢頁</button>
+			<button type="button" id="btn2" class="btn btn-primary" onclick="navigateToPage('addPage')">新增頁</button>
+		</div>
+		<form id="editform" action="/submit" method="POST">
+			<div class="form-grid">
+				<!-- 帳號 -->
+				<div class="form-group">
+					<label for="account">帳號：</label>
+					<input type="text" id="account" name="account" readonly style="background-color: #f0f0f0; color: #888;">
+				</div>
+
+				<!-- 密碼 -->
+				<div class="form-group">
+					<label for="password">密碼：</label>
+					<input type="password" id="password" name="password">
+				</div>
+
+				<!-- 姓名 -->
+				<div class="form-group">
+					<label for="name">姓名：</label>
+					<input type="text" id="name" name="name">
+				</div>
+
+				<!-- 生日 -->
+				<div class="form-group">
+					<label for="birthdate">生日：</label>
+					<input type="date" id="birthdate" name="birthdate">
+				</div>
+
+				<!-- 部門 -->
+				<div class="form-group">
+					<label for="department">部門：</label>
+					<input type="text" id="department" name="department">
+				</div>
+
+				<!-- 組別 -->
+				<div class="form-group">
+					<label for="group">組別：</label>
+					<input type="text" id="team" name="team">
+				</div>
+
+				<!-- 狀態 -->
+				<div class="form-group">
+					<label for="status">狀態：</label>
+					<select id="status" name="status">
+						<option value="Y">啟用</option>
+						<option value="N">停用</option>
+					</select>
+				</div>
+
+				<!-- 帳號生效日期 -->
+				<div class="form-group">
+					<label for="effectivedate">帳號生效日期：</label>
+					<input type="date" id="effectivedate" name="effectivedate">
+				</div>
+
+				<!-- 帳號停用日期 -->
+				<div class="form-group">
+					<label for="disableddate">帳號停用日期：</label>
+					<input type="date" id="disableddate" name="disableddate">
+				</div>
+
+				<!-- 入職日期 -->
+				<div class="form-group">
+					<label for="hiredate">入職日期：</label>
+					<input type="date" id="hiredate" name="hiredate">
+				</div>
+				<!-- Memo -->
+				<div class="form-group">
+					<label for="memo">Memo：</label>
+					<textarea id="memo" name="memo" rows="4" cols="50"></textarea>
+				</div>
+			</div>
+			<!-- 提交按鈕 -->
+			<div class="form-actions">
+				<button type="button" class="btn btn-primary" onclick="confirmEdit()">確認修改</button>
+				<button type="button" class="btn btn-secondary" onclick="confirmReset()">欄位清除</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Bootstrap 和 JavaScript -->
+	<script>
+		const tokenKey = 'authToken'; // 本地存儲的 Token 鍵值
+
+		$(document).ready(function () {
+
+			// 頁面載入時檢查登入狀態
+			const token = localStorage.getItem(tokenKey);
+			if (token) {
+				// 發送驗證請求以檢查 Token 是否有效
+				$.ajax({
+					url: '/checkLogin',
+					method: 'GET',
+					headers: {
+						Authorization: `Bearer ${token}` // 將 Token 放入請求 Header
+					},
+					success: function () {
+
+					},
+					error: function () {
+						localStorage.removeItem(tokenKey); // 清除無效 Token
+						window.location.href = "/homePage"; // 跳轉至首頁
+					}
+				});
+
+			} else {
+				isSignOut = true;
+				window.location.href = "/homePage"; // 跳轉至首頁
+			}
+
+		});
+
+		document.addEventListener('DOMContentLoaded', () => {
+
+			const form = document.querySelector('form'); // 假設表單有 <form> 標籤包住
+
+			if (form) {
+				// 綁定表單提交事件
+				form.addEventListener('submit', (event) => {
+					event.preventDefault(); // 防止表單默認提交
+
+					const formData = new FormData(form); // 取得表單所有欄位數據
+					const params = new URLSearchParams();
+
+					for (const [key, value] of formData.entries()) {
+						if (value) {
+							params.append(key, value); // 將欄位名稱和值添加到查詢字串中
+						}
+					}
+
+					// 跳轉到 update.html，帶入查詢字串
+					window.location.href = `update?${params.toString()}`;
+				});
+			} else {
+				console.error('未找到表單');
+			}
+		});
+
+		document.addEventListener("DOMContentLoaded", () => {
+
+			const account = getQueryParam("account");
+
+			if (!account) {
+				window.location.href = "\searchPage"
+				return;
+			}
+
+			// 發送後端請求以查詢使用者資料
+			fetch('/employee/queryCase2', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({account}),
+			})
+				.then((response) => {
+					if (!response.ok) {
+						throw new Error('查詢失敗');
+					}
+					return response.json();
+				})
+				.then((employee) => {
+					employee.birthdate = employee.birthDate;
+					employee.disableddate = employee.disabledDate;
+					employee.effectivedate = employee.effectiveDate;
+					employee.hiredate = employee.hireDate;
+					if (employee && Object.keys(employee).length > 0) {
+						// 填充數據到畫面欄位
+						for (const [key, value] of Object.entries(employee)) {
+							const field = document.querySelector(`[name="${key}"]`);
+							if (field) {
+								if (field.type === "date" && value) {
+									// 日期格式化為 YYYY-MM-DD
+									const formattedDate = formatToISODate(value);
+									field.value = formattedDate;
+								} else {
+									field.value = value; // 將對應數據填入欄位
+								}
+							}
+						}
+					} else {
+						throw new Error('資料異常，請重新整理');
+					}
+				})
+				.catch((error) => {
+					alert(error.message);
+				});
+		});
+
+		// 提交表單資料
+		function confirmEdit() {
+			const form = document.getElementById("editform");
+			const formData = new FormData(form);
+
+			// 將表單資料轉換成 JSON 格式
+			const jsonData = {};
+			formData.forEach((value, key) => {
+				jsonData[key] = value;
+			});
+			console.log(jsonData);
+			// 發送 POST 請求到後端
+			fetch('/employee/updateCase1', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(jsonData)
+			})
+				.then(response => {
+					if (response.ok) {
+						return response.json(); // 成功回傳 JSON
+					} else {
+						throw new Error("修改失敗，請重試");
+					}
+				})
+				.then(data => {
+					console.log(data);
+					alert("修改成功！帳號：" + data.employee.account);
+					window.location.href = "/searchPage"; // 跳轉至查詢頁面
+				})
+				.catch(error => {
+					alert("錯誤：" + error.message);
+				});
+		}
+
+		function confirmReset() {
+			// 顯示確認小視窗
+			const userConfirmed = confirm("您確定要清除所有欄位嗎？");
+
+			if (userConfirmed) {
+				// 清除表單內容
+				document.getElementById("editform").reset();
+			}
+		}
+
+		function navigateToPage(url) {
+			if (confirm('是否確定切換頁面？')) {
+				document.body.innerHTML = '';
+				setTimeout(() => {
+					window.location.href = url;
+				}, 150);
+			}
+		}
+
+		// 提取 URL 中的參數
+		function getQueryParam(param) {
+			const urlParams = new URLSearchParams(window.location.search);
+			return urlParams.get(param);
+		}
+
+		// 格式化日期為 YYYY-MM-DD
+		function formatToISODate(dateString) {
+			if (!dateString) return ""; // 無值時回傳空字串
+
+			// 若為 ISO 日期格式，直接取前 10 個字元
+			if (dateString.includes("T")) {
+				return dateString.split("T")[0];
+			}
+
+			// 若為其他格式，嘗試解析日期
+			const date = new Date(dateString);
+			if (isNaN(date)) {
+				console.warn("無法解析的日期格式:", dateString);
+				return ""; // 無效日期，返回空字串
+			}
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0');
+			const day = String(date.getDate()).padStart(2, '0');
+			return `${year}-${month}-${day}`;
+		}
+
+		function signOut() {
+			// 清除登入相關的 Session 或 Token
+			localStorage.removeItem('authToken'); // 如果使用 localStorage 存 Token
+			sessionStorage.clear();              // 如果使用 sessionStorage
+			alert('您已成功登出！');
+			// 導向至登入頁面
+			window.location.href = '/homePage'; // 替換成你的登入頁面路徑
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>歡迎登入</title>
+	<link rel="stylesheet" type="text/css" th:href="@{css/common.css}" />
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+	<body class="form-page">
+		<div class="form-container">
+		<content tag="topBlock">
+			<div class="form-actions">
+				<button type="button" id="btnSignOut" class="btn btn-primary" style="margin-left: auto;" onclick="signOut()">登出</button>
+			</div>
+			<div class="form-actions">
+				<button type="button" id="btn1" class="btn btn-primary" onclick="navigateToPage('searchPage')">查詢頁</button>
+				<button type="button" id="btn2" class="btn btn-primary" onclick="navigateToPage('addPage')">新增頁</button>
+			</div>
+		</content>
+			<h1>歡迎來到使用者管理頁面</h1>
+			<p style="text-align: center;">您已成功登入。</p>
+		</div>
+	</body>
+</body>
+<script>
+	const tokenKey = 'authToken'; // 本地存儲的 Token 鍵值
+	$(document).ready(function () {
+
+		// 頁面載入時檢查登入狀態
+		const token = localStorage.getItem(tokenKey);
+		if (token) {
+			// 發送驗證請求以檢查 Token 是否有效
+			$.ajax({
+				url: '/checkLogin',
+				method: 'GET',
+				headers: {
+					Authorization: `Bearer ${token}` // 將 Token 放入請求 Header
+				},
+				success: function () {
+
+				},
+				error: function () {
+					localStorage.removeItem(tokenKey); // 清除無效 Token
+					window.location.href = "/homePage"; // 跳轉至首頁
+				}
+			});
+
+		} else {
+			isSignOut = true;
+			window.location.href = "/homePage"; // 跳轉至首頁
+		}
+
+	});
+	function navigateToPage(url) {
+		if (confirm('是否確定切換頁面？')) {
+			document.body.innerHTML = '';
+			setTimeout(() => {
+				window.location.href = url;
+			}, 150);
+		}
+	}
+	function signOut() {
+		// 清除登入相關的 Session 或 Token
+		localStorage.removeItem('authToken'); // 如果使用 localStorage 存 Token
+		sessionStorage.clear();              // 如果使用 sessionStorage
+		alert('您已成功登出！');
+		// 導向至登入頁面
+		window.location.href = '/homePage'; // 替換成你的登入頁面路徑
+	}
+</script>
+
+</html>

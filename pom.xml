@@ -5,14 +5,15 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.0</version>
+		<version>3.4.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.nccc</groupId>
-	<artifactId>raymund</artifactId>
+	<groupId>com.permansys</groupId>
+	<artifactId>PerManSYS</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo</name>
-	<description>Demo project for Spring Boot</description>
+	<packaging>war</packaging>
+	<name>PerManSYS</name>
+	<description>PerManSYS project for Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -32,42 +33,98 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-core</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>cglib</groupId>
+		    <artifactId>cglib</artifactId>
+		    <version>3.3.0</version>
+		</dependency>
 
-		<!-- Spring Boot MyBatis Starter -->
-<!--		<dependency>-->
-<!--			<groupId>org.mybatis.spring.boot</groupId>-->
-<!--			<artifactId>mybatis-spring-boot-starter</artifactId>-->
-<!--			<version>3.0.4</version>-->
-<!--		</dependency>-->
+		<!-- Spring Boot Starter JPA -->
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-data-jpa</artifactId>
+	    </dependency>
 
-		<!-- MySQL Driver -->
-<!--		<dependency>-->
-<!--		    <groupId>mysql</groupId>-->
-<!--		    <artifactId>mysql-connector-java</artifactId>-->
-<!--		    <version>8.0.33</version>-->
-<!--		</dependency>-->
+	    <!-- Hibernate Core -->
+	    <dependency>
+	        <groupId>org.hibernate</groupId>
+	        <artifactId>hibernate-core</artifactId>
+	        <version>6.3.1.Final</version> <!-- 根據需要替換為適合的 Hibernate 版本 -->
+	    </dependency>
 
-			<dependency>
-			    <groupId>javax.persistence</groupId>
-			    <artifactId>javax.persistence-api</artifactId>
-			    <version>2.2</version>
-			</dependency>
-			<dependency>
-			    <groupId>org.hibernate</groupId>
-			    <artifactId>hibernate-core</artifactId>
-			    <version>5.6.15.Final</version> <!-- 適當的 Hibernate 版本 -->
-			</dependency>
+	    <!-- PostgreSQL JDBC Driver -->
+	    <dependency>
+	        <groupId>org.postgresql</groupId>
+	        <artifactId>postgresql</artifactId>
+	        <version>42.6.0</version> <!-- PostgreSQL 驅動版本 -->
+	    </dependency>
+	
+	    <!-- Spring Boot Starter Web (若需要建立 REST API) -->
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-web</artifactId>
+	    </dependency>
+	
+	    <!-- Spring Boot DevTools (開發時熱部署) -->
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-devtools</artifactId>
+	        <scope>runtime</scope>
+	        <optional>true</optional>
+	    </dependency>
+
+	    <!-- 測試依賴 -->
+	    <dependency>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-starter-test</artifactId>
+	        <scope>test</scope>
+	    </dependency>
+
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-api</artifactId>
+		    <version>0.11.5</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-impl</artifactId>
+		    <version>0.11.5</version>
+		</dependency>
+		<dependency>
+		    <groupId>io.jsonwebtoken</groupId>
+		    <artifactId>jjwt-jackson</artifactId>
+		    <version>0.11.5</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
+		<finalName>permansys</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

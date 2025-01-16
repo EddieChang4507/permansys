@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>快速註冊帳號</title>
+	<link rel="stylesheet" type="text/css" th:href="@{css/common.css}" />
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="form-page">
+	<div class="form-container">
+		<h1>快速註冊帳號</h1>
+		<div class="form-actions" style="display: flex; justify-content: left;">
+			<button type="button" id="btnGoBack" class="back-button btn btn-primary" onclick="goBack()">回登入頁</button>
+		</div>
+		<form id="addform" action="/submit" method="POST">
+			<div class="form-grid">
+				<!-- 帳號 -->
+				<div class="form-group">
+					<label for="account">帳號：</label>
+					<input type="text" id="account" name="account" required>
+				</div>
+
+				<!-- 密碼 -->
+				<div class="form-group">
+					<label for="password">密碼：</label>
+					<input type="password" id="password" name="password" required>
+				</div>
+
+				<!-- 姓名 -->
+				<div class="form-group">
+					<label for="name">姓名：</label>
+					<input type="text" id="name" name="name" required>
+				</div>
+				<!-- 狀態 -->
+				<div class="form-group" style="display:none;">
+					<label for="status">狀態：</label>
+					<select id="status" name="status">
+						<option value="Y">啟用</option>
+					</select>
+				</div>
+
+			</div>
+			<!-- 提交按鈕 -->
+			<div class="form-actions">
+				<button type="button" class="btn btn-primary" onclick="confirmAdd()">註冊</button>
+				<button type="button" class="btn btn-secondary" onclick="confirmReset()">欄位清除</button>
+			</div>
+		</form>
+	</div>
+
+	<!-- Bootstrap 和 JavaScript -->
+	<script>
+		const tokenKey = 'authToken'; // 本地存儲的 Token 鍵值
+
+		function confirmReset() {
+			// 顯示確認小視窗
+			const userConfirmed = confirm("您確定要清除所有欄位嗎？");
+
+			if (userConfirmed) {
+				// 清除表單內容
+				document.getElementById("addform").reset();
+			}
+		}
+
+		// 提交表單資料
+		function confirmAdd() {
+			const form = document.getElementById("addform");
+			const formData = new FormData(form);
+
+			// 檢查必填欄位
+			const requiredFields = ["account", "password", "name"];
+			const missingFields = [];
+
+			requiredFields.forEach((field) => {
+				const value = formData.get(field);
+				if (!value || value.trim() === "") {
+					missingFields.push(field);
+				}
+			});
+
+			if (missingFields.length > 0) {
+				const fieldNames = missingFields.map((field) => {
+					const label = document.querySelector(`label[for="${field}"]`).textContent;
+					return label.replace("：", "");
+				});
+				alert(`請填寫以下必填欄位：${fieldNames.join(", ")}`);
+				return;
+			}
+
+			// 將表單資料轉換成 JSON 格式
+			const jsonData = {};
+			formData.forEach((value, key) => {
+				jsonData[key] = value;
+			});
+
+			// 發送 POST 請求到後端
+			fetch('/employee/insertCase1', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(jsonData)
+			})
+				.then(response => {
+					if (response.ok) {
+						return response.json(); // 成功回傳 JSON
+					} else {
+						throw new Error("新增失敗，請重試");
+					}
+				})
+				.then(data => {
+					console.log(data);
+					alert("新增成功！帳號：" + data.employee.account);
+					window.location.href = "/searchPage"; // 跳轉至查詢頁面
+				})
+				.catch(error => {
+					alert("錯誤：" + error.message);
+				});
+		}
+
+		function navigateToPage(url) {
+			if (confirm('是否確定切換頁面？')) {
+				document.body.innerHTML = '';
+				setTimeout(() => {
+					window.location.href = url;
+				}, 150);
+			}
+		}
+
+		function goBack() {
+			// 使用瀏覽器的返回功能
+			console.log("Back button clicked");
+			window.history.back();
+			//window.location.href = "/homePage"
+		}
+	</script>
+</body>
+
+</html>

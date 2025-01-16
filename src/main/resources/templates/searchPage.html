@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>查詢使用者</title>
+	<link rel="stylesheet" type="text/css" th:href="@{css/common.css}" />
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="form-page">
+	<div class="form-container">
+		<h1>查詢使用者</h1>
+		<div class="form-actions">
+			<button type="button" id="btnSignOut" class="btn btn-primary" style="margin-left: auto;" onclick="signOut()">登出</button>
+		</div>
+		<div class="form-actions">
+			<button type="button" id="btn1" class="btn btn-primary" onclick="navigateToPage('searchPage')">查詢頁</button>
+			<button type="button" id="btn2" class="btn btn-primary" onclick="navigateToPage('addPage')">新增頁</button>
+		</div>
+		<form id="searchForm">
+			<div class="form-grid">
+				<div class="form-group">
+					<label for="account">帳號：</label>
+					<input type="text" id="account" name="account">
+				</div>
+				<div class="form-group">
+					<label for="department">部門：</label>
+					<input type="text" id="department" name="department">
+				</div>
+				<div class="form-group">
+					<label for="group">組別：</label>
+					<input type="text" id="team" name="team">
+				</div>
+				<div class="form-group">
+					<label for="status">狀態：</label>
+					<select id="status" name="status">
+						<option value="">全部</option>
+						<option value="Y" selected>啟用</option>
+						<option value="N">停用</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="join_date_from">入職時間：</label>
+					<input type="date" id="join_date_from" name="join_date_from">
+				</div>
+			</div>
+			<div class="form-actions">
+				<button type="button" class="btn btn-primary" onclick="searchButton()">查詢</button>
+				<button type="button" class="btn btn-secondary" onclick="resetForm()">重置</button>
+			</div>
+		</form>
+
+		<!-- 查詢結果 -->
+		<div id="queryResults" class="query-results">
+			<h2>查詢結果</h2>
+			<table border="1" class="result-table">
+				<thead>
+					<tr>
+						<th>帳號</th>
+						<th>姓名</th>
+						<th>生日</th>
+						<th>部門</th>
+						<th>組別</th>
+						<!--						<th>狀態(例如：有效、無效)</th>-->
+						<th>帳號生效日期</th>
+						<!--						<th>帳號停用日期</th>-->
+						<th>入職日期</th>
+						<th>建立日期</th>
+						<th>修改日期</th>
+						<th>備註</th>
+						<th>當前狀態</th>
+						<th>編輯/狀態</th>
+					</tr>
+				</thead>
+				<tbody id="resultsBody">
+					<!-- 動態生成的查詢結果 -->
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<script>
+
+		const tokenKey = 'authToken'; // 本地存儲的 Token 鍵值
+
+		document.addEventListener("DOMContentLoaded", function () {
+			searchButton(); // 自動執行 searchButton 方法
+		});
+
+		$(document).ready(function () {
+
+			// 頁面載入時檢查登入狀態
+			const token = localStorage.getItem(tokenKey);
+			if (token) {
+				// 發送驗證請求以檢查 Token 是否有效
+				$.ajax({
+					url: '/checkLogin',
+					method: 'GET',
+					headers: {
+						Authorization: `Bearer ${token}` // 將 Token 放入請求 Header
+					},
+					success: function () {
+
+					},
+					error: function () {
+						localStorage.removeItem(tokenKey); // 清除無效 Token
+						window.location.href = "/homePage"; // 跳轉至首頁
+					}
+				});
+			} else {
+				window.location.href = "/homePage"; // 跳轉至首頁
+			}
+		});
+
+		function searchButton() {
+			const formData = new FormData(document.getElementById('searchForm'));
+
+			// 將表單參數映射到後端要求的參數名稱
+			const params = new URLSearchParams({
+				account: formData.get('account') || '',
+				department: formData.get('department') || '',
+				team: formData.get('team') || '',
+				status: formData.get('status') || '', // 轉換後的 Y/N
+				hireDate: formData.get('join_date_from') || '',
+			});
+
+			// 發送到指定後端 URL
+			const url = `/employee/queryCase1?${params.toString()}`;
+
+			fetch(url)
+				.then(response => response.json())
+				.then(data => {
+					const resultsBody = document.getElementById('resultsBody');
+					const queryResults = document.getElementById('queryResults');
+					resultsBody.innerHTML = ''; // 清空之前的結果
+
+					if (data && data.length > 0) {
+						queryResults.style.display = 'block';
+						data.forEach(row => {
+							// 將 Y/N 轉換為 "啟用" 和 "刪除"
+							const statusText = row.status === 'Y' ? '啟用' : row.status === 'N' ? '刪除' : '';
+
+							const tr = document.createElement('tr');
+							tr.innerHTML = `
+								<td>${row.account ? row.account : ''}</td>
+								<td>${row.name ? row.name : ''}</td>
+								<td>${row.birthDate ? row.birthDate : ''}</td>
+								<td>${row.department ? row.department : ''}</td>
+								<td>${row.team ? row.team : ''}</td>
+								<td style="display: none;">${row.status ? row.status : ''}</td>
+								<td>${row.effectiveDate ? row.effectiveDate.split("T")[0] : ''}</td>
+								<td style="display: none;">${row.disabledDate ? row.disabledDate : ''}</td>
+								<td>${row.hireDate ? row.hireDate.split("T")[0] : ''}</td>
+								<td>${row.createdAt ? row.createdAt.split("T")[0] : ''}</td>
+								<td>${row.updatedAt ? row.updatedAt.split("T")[0] : ''}</td>
+								<td>${row.memo ? row.memo : ''}</td>
+								<td>${statusText}</td>
+								<td>
+									<a href="javascript:void(0);" onclick="editButton('${row.account}')">編輯</a> |
+									${row.status === 'Y' ? `| <a href="javascript:void(0);" onclick="confirmDeactivate('${row.account}')">刪除</a>` : ''}
+								</td>
+							`;
+							resultsBody.appendChild(tr);
+						});
+					} else {
+						queryResults.style.display = 'none';
+						alert('查無資料！');
+					}
+				})
+				.catch(error => {
+				});
+		}
+
+		function confirmDeactivate(account) {
+
+			// 阻止 <a> 的預設行為
+			if (event) {
+				event.preventDefault();
+			}
+
+			if (confirm('確定要刪除嗎？')) {
+				// 使用 fetch 發送 POST 請求到後端
+				fetch(`/employee/deleteCase1`, {
+					method: 'POST', // 或 'GET' 依後端需求
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({account: account}) // 傳送 account 作為參數
+				})
+					.then(response => {
+						if (response.ok) {
+							alert('刪除成功');
+							// 可以根據需求進行其他處理，如重新整理頁面或更新 UI
+							location.reload();
+						} else {
+							throw new Error('刪除失敗');
+						}
+					})
+					.catch(error => {
+						console.error('錯誤:', error);
+						alert('操作失敗，請稍後再試');
+					});
+			}
+		}
+
+		function editButton(account) {
+			// 跳轉到 /updatePage 頁面，帶上帳號參數
+			window.location.href = `/updatePage?account=${encodeURIComponent(account)}`;
+		}
+
+
+		function resetForm() {
+			searchForm.reset();
+			document.getElementById("queryResults").style.display = "none";
+		}
+
+		function navigateToPage(url) {
+			if (confirm('是否確定切換頁面？')) {
+				document.body.innerHTML = '';
+				setTimeout(() => {
+					window.location.href = url;
+				}, 150);
+			}
+		}
+		function signOut() {
+			// 清除登入相關的 Session 或 Token
+			localStorage.removeItem('authToken'); // 如果使用 localStorage 存 Token
+			sessionStorage.clear();              // 如果使用 sessionStorage
+			alert('您已成功登出！');
+			// 導向至登入頁面
+			window.location.href = '/homePage'; // 替換成你的登入頁面路徑
+		}
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+	<title>登入頁面</title>
+	<link rel="stylesheet" type="text/css" th:href="@{css/common.css}" />
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body class="form-page">
+	<div class="form-container">
+		<h1>登入</h1>
+		<div th:if="${error}" class="error-message" th:text="${error}"></div>
+		<form id="loginform" action="/login" method="post">
+			<div class="form-group">
+				<label for="account">使用者名稱</label>
+				<input type="text" id="account" name="account" placeholder="請輸入使用者名稱" required>
+			</div>
+
+			<div class="form-group">
+				<label for="password">密碼</label>
+				<input type="password" id="password" name="password" placeholder="請輸入密碼" required>
+			</div>
+
+			<div class="form-actions">
+				<button type="button" class="btn btn-primary" onclick="loginButton()">登入</button>
+				<button type="button" id="btn2" class="btn btn-primary"
+					onclick="navigateToPage('signupPage')">快速註冊</button>
+			</div>
+		</form>
+	</div>
+</body>
+<script>
+	window.onunload = function(){};  // 這會禁用頁面快取
+	const tokenKey = 'authToken'; // 本地存儲的 Token 鍵值
+
+	$(window).on('pageshow', function(event) {
+	    if (event.originalEvent.persisted) {
+	        // 從快取載入頁面時執行
+	        init(); // 你的初始化函數
+	    }
+	});
+
+	function init(){
+
+		// 頁面載入時檢查登入狀態
+		const token = localStorage.getItem(tokenKey);
+		if (token) {
+			// 發送驗證請求以檢查 Token 是否有效
+			$.ajax({
+				url: '/checkLogin',
+				method: 'GET',
+				headers: {
+					Authorization: `Bearer ${token}` // 將 Token 放入請求 Header
+				},
+				success: function () {
+					window.location.href = "/welcomePage"; // 跳轉至歡迎頁面
+				},
+				error: function () {
+					localStorage.removeItem(tokenKey); // 清除無效 Token
+				}
+			});
+		}
+	}
+	window.onpageshow = function(event) {
+	    if (event.persisted) {
+	        window.location.reload();
+	    }
+	};
+
+	$(document).ready(function () {
+		if (performance.navigation.type === 2) {
+		    // 2 表示通過回上一頁進入
+		    location.reload();
+		}
+	});
+	// 提交表單資料
+	function loginButton() {
+		const form = document.getElementById("loginform");
+		const formData = new FormData(form);
+
+		// 將表單資料轉換成 JSON 格式
+		const jsonData = {};
+		formData.forEach((value, key) => {
+			jsonData[key] = value;
+		});
+
+		// 發送 POST 請求到後端
+		fetch('/loginCase1', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(jsonData)
+		})
+			.then(response => {
+				if (response.ok) {
+					return response.json(); // 成功回傳 JSON
+				} else {
+					return response.json().then(data => {
+						throw new Error(data.message);
+					});
+				}
+			})
+			.then(data => {
+				console.log(data);
+				localStorage.setItem(tokenKey, data.token); // 儲存 Token
+				alert("登入成功！帳號：" + data.employee.account);
+				window.location.href = "/welcomePage"; // 跳轉至歡迎頁面
+			})
+			.catch(error => {
+				alert("錯誤：" + error.message);
+			});
+	}
+
+	function navigateToPage(url) {
+		document.body.innerHTML = '';
+		setTimeout(() => {
+			window.location.href = url;
+		}, 150);
+	}
+
+</script>
+
+</html>
